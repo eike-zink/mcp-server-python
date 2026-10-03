@@ -13,7 +13,8 @@ taskserver/
 ├── __init__.py
 ├── model.py      # Data model: Task, Priority (dataclass, Enum)
 ├── repository.py # Persistence: load/save JSON, CRUD logic
-└── cli.py        # User interface: argparse with subcommands
+├── cli.py        # User interface: argparse with subcommands
+└── mcp_server.py # MCP interface for AI clients (MCPServer/FastMCP)
 ```
 
 Die Trennung ist bewusst so gewählt: In Schritt 2 wird mit FastMCP ein
@@ -45,9 +46,33 @@ python -m taskserver.cli delete <id>
 python -m taskserver.cli --datei test/aufgaben.json list
 ```
 
-## Nächster Schritt
+## Schritt 2: MCP-Server
 
-Schritt 2: Aufbau des MCP-Servers mit FastMCP (`mcp`-Paket). Die Funktionen
-des Repositories werden dann als MCP-Tools (`add_task`, `list_tasks`,
-`complete_task`, ...) angeboten, damit die KI die Aufgabenverwaltung direkt
-nutzen kann.
+Der MCP-Server (`taskserver/mcp_server.py`) stellt dieselben
+Repository-Funktionen als MCP-Tools bereit – vollständíg englisch,
+da die Tool-Beschreibungen von der KI gelesen werden:
+
+| Tool | Beschreibung |
+|------|--------------|
+| `add_task` | Neue Aufgabe anlegen (Titel, Beschreibung, Priorität A–D) |
+| `list_tasks` | Aufgaben anzeigen, filterbar nach Status und Priorität |
+| `get_task` | Details einer Aufgabe anzeigen |
+| `complete_task` | Aufgabe als erledigt markieren |
+| `delete_task` | Aufgabe löschen |
+
+Server starten (Stdio-Transport, Kommunikation über stdin/stdout):
+
+```bash
+python -m taskserver.mcp_server
+```
+
+Zum Testen ohne eigene KI eignet sich der MCP Inspector:
+
+```bash
+npx @modelcontextprotocol/inspector python -m taskserver.mcp_server
+```
+
+Installation des SDK: `pip install "mcp>=2.0"` (siehe `requirements.txt`).
+Hinweis: In SDK 2.x heißt die Serverklasse `MCPServer`
+(`from mcp.server.mcpserver import MCPServer`); in älteren Versionen
+hieß sie `FastMCP`.
