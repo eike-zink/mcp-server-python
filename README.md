@@ -9,43 +9,45 @@ Priorität (A–D). Die Liste wird lokal in einer JSON-Datei gespeichert.
 ## Architektur
 
 ```
-aufgabenserver/
+taskserver/
 ├── __init__.py
-├── model.py     # Datenmodell: Aufgabe, Prioritaet (dataclass, Enum)
-├── repository.py # Persistenz: JSON laden/speichern, CRUD-Logik
-└── cli.py       # Benutzungsoberfläche: argparse mit Unterbefehlen
+├── model.py      # Data model: Task, Priority (dataclass, Enum)
+├── repository.py # Persistence: load/save JSON, CRUD logic
+└── cli.py        # User interface: argparse with subcommands
 ```
 
 Die Trennung ist bewusst so gewählt: In Schritt 2 wird mit FastMCP ein
-weiterer "Klient" (die KI) angebaut. Klient und CLI greifen beide nur auf
-das `AufgabenRepository` zu – das Modell und die Persistenz bleiben
-unverändert.
+weiterer "Client" (die KI) angebaut. Client und CLI greifen beide nur auf
+das `TaskRepository` zu – Modell und Persistenz bleiben unverändert.
+
+Bezeichnungen im Code sind Englisch (PEP 8), Ausgaben und Hilfetexte sind
+Deutsch.
 
 ## Verwendung
 
 ```bash
 # Aufgabe anlegen (Priorität A–D, Standard C)
-python -m aufgabenserver.cli add "MCP-Server aufbauen" -b "FastMCP-Beispiel" -p A
+python -m taskserver.cli add "MCP-Server aufbauen" -b "FastMCP-Beispiel" -p A
 
 # Alle Aufgaben anzeigen, sortiert nach Priorität
-python -m aufgabenserver.cli list
+python -m taskserver.cli list
 
 # Nur offene Aufgaben bzw. nur Priorität A
-python -m aufgabenserver.cli list -o
-python -m aufgabenserver.cli list -p A
+python -m taskserver.cli list -o
+python -m taskserver.cli list -p A
 
 # Details anzeigen, abhaken, löschen
-python -m aufgabenserver.cli show <id>
-python -m aufgabenserver.cli done <id>
-python -m aufgabenserver.cli delete <id>
+python -m taskserver.cli show <id>
+python -m taskserver.cli done <id>
+python -m taskserver.cli delete <id>
 
-# Eigener Dateipfad statt aufgaben.json
-python -m aufgabenserver.cli --datei test/aufgaben.json list
+# Eigener Dateipfad statt tasks.json
+python -m taskserver.cli --datei test/aufgaben.json list
 ```
 
 ## Nächster Schritt
 
 Schritt 2: Aufbau des MCP-Servers mit FastMCP (`mcp`-Paket). Die Funktionen
-des Repositories werden dann als MCP-Tools (`aufgabe_anlegen`,
-`aufgaben_auflisten`, `aufgabe_abhaken`, ...) angeboten, damit die KI die
-Aufgabenverwaltung direkt nutzen kann.
+des Repositories werden dann als MCP-Tools (`add_task`, `list_tasks`,
+`complete_task`, ...) angeboten, damit die KI die Aufgabenverwaltung direkt
+nutzen kann.
