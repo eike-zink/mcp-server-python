@@ -22,6 +22,61 @@ mcp = MCPServer("taskserver")
 _repository = TaskRepository(Path("tasks.json"))
 
 
+@mcp.resource(
+    "taskserver://priorities",
+    name="priorities",
+    description="Explanation of the task priority system (A to D).",
+    mime_type="text/plain",
+)
+def priorities_guide() -> str:
+    """Documentation about the meaning of the priority levels A to D."""
+    return "\n".join(
+        [
+            "Priority system for tasks:",
+            "  A - urgent and important: work on these first (today)",
+            "  B - important but not urgent: plan a fixed time slot",
+            "  C - routine tasks: process them when A and B are done",
+            "  D - nice to have: only if time is left, candidate for deletion",
+            "",
+            "When advising users, prefer tasks with a higher priority",
+            "(A before B before C before D).",
+        ]
+    )
+
+
+@mcp.prompt(
+    name="plan_my_day",
+    description="Create a focused task list from all open tasks: the AI picks "
+    "at most 4 tasks, ordered by priority.",
+)
+def plan_my_day() -> str:
+    """Builds a planning prompt from all open tasks."""
+    open_tasks = _repository.list_tasks(only_open=True)
+    if not open_tasks:
+        return (
+            "There are currently no open tasks. Congratulate the user "
+            "and suggest they could create new tasks or take a break."
+        )
+    lines = ["Your open tasks:"]
+    for t in open_tasks:
+        entry = f"- [{t.priority.value}] {t.title}"
+        if t.description:
+            entry += f" ({t.description})"
+        lines.append(entry)
+    return "\n".join(
+        [
+            "You are a personal productivity assistant.",
+            "Create a focused task list for the user's day.",
+            "", *lines, "",
+            "Rules:",
+            "1. Pick at most 4 tasks from the list above.",
+            "2. Order them by priority (A first, then B, C, D).",
+            "3. Briefly justify each pick in one short sentence.",
+            "4. Write the result as a numbered list.",
+        ]
+    )
+
+
 def _task_to_text(task) -> str:
     """Formats a single task for compact output."""
     status = "done" if task.done else "open"

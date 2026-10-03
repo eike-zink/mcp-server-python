@@ -60,6 +60,18 @@ da die Tool-Beschreibungen von der KI gelesen werden:
 | `complete_task` | Aufgabe als erledigt markieren |
 | `delete_task` | Aufgabe löschen |
 
+### Ressource (Kontext für die KI)
+
+| URI | Beschreibung |
+|-----|--------------|
+| `taskserver://priorities` | Erklärung des Prioritätensystems A–D (Ressource, kein Tool, da reiner Lese-Kontext) |
+
+### Prompt (wiederverwendbarer Auftrag)
+
+| Prompt | Beschreibung |
+|--------|--------------|
+| `plan_my_day` | Erstellt aus den offenen Aufgaben eine fokussierte Tagesliste: die KI wählt max. 4 Aufgaben und sortiert sie nach Priorität |
+
 Server starten (Stdio-Transport, Kommunikation über stdin/stdout):
 
 ```bash
