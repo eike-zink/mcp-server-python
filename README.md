@@ -84,6 +84,26 @@ Zum Testen ohne eigene KI eignet sich der MCP Inspector:
 npx @modelcontextprotocol/inspector python -m taskserver.mcp_server
 ```
 
+### Eigener MCP-Client (REPL)
+
+Für Lernzwecke liegt ein eigener interaktiver MCP-Client bei, der sich
+per stdio mit dem Server verbindet und alle Protokoll-Fähigkeiten von
+Hand ausprobierbar macht (Tools, Ressourcen, Prompts):
+
+```bash
+python -m taskserver.mcp_client
+```
+
+Befehle im Client (Auswahl, `hilfe` zeigt alles):
+
+```
+add Erste Aufgabe -b Test -p A    # Tool add_task aufrufen
+liste -o                          # Tool list_tasks, nur offene
+ressourcen / lies <uri>           # Ressourcen entdecken und lesen
+prompts / prompt plan_my_day      # Prompts auflisten und abrufen
+ende                              # Verbindung trennen
+```
+
 Installation des SDK: `pip install "mcp>=2.0"` (siehe `requirements.txt`).
 Hinweis: In SDK 2.x heißt die Serverklasse `MCPServer`
 (`from mcp.server.mcpserver import MCPServer`); in älteren Versionen
