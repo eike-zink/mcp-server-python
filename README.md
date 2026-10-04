@@ -9,43 +9,102 @@ Priorität (A–D). Die Liste wird lokal in einer JSON-Datei gespeichert.
 ## Architektur
 
 ```
-aufgabenserver/
+taskserver/
 ├── __init__.py
-├── model.py     # Datenmodell: Aufgabe, Prioritaet (dataclass, Enum)
-├── repository.py # Persistenz: JSON laden/speichern, CRUD-Logik
-└── cli.py       # Benutzungsoberfläche: argparse mit Unterbefehlen
+├── model.py      # Data model: Task, Priority (dataclass, Enum)
+├── repository.py # Persistence: load/save JSON, CRUD logic
+├── cli.py        # User interface: argparse with subcommands
+└── mcp_server.py # MCP interface for AI clients (MCPServer/FastMCP)
 ```
 
 Die Trennung ist bewusst so gewählt: In Schritt 2 wird mit FastMCP ein
-weiterer "Klient" (die KI) angebaut. Klient und CLI greifen beide nur auf
-das `AufgabenRepository` zu – das Modell und die Persistenz bleiben
-unverändert.
+weiterer "Client" (die KI) angebaut. Client und CLI greifen beide nur auf
+das `TaskRepository` zu – Modell und Persistenz bleiben unverändert.
+
+Bezeichnungen im Code sind Englisch (PEP 8), Ausgaben und Hilfetexte sind
+Deutsch.
 
 ## Verwendung
 
 ```bash
 # Aufgabe anlegen (Priorität A–D, Standard C)
-python -m aufgabenserver.cli add "MCP-Server aufbauen" -b "FastMCP-Beispiel" -p A
+python -m taskserver.cli add "MCP-Server aufbauen" -b "FastMCP-Beispiel" -p A
 
 # Alle Aufgaben anzeigen, sortiert nach Priorität
-python -m aufgabenserver.cli list
+python -m taskserver.cli list
 
 # Nur offene Aufgaben bzw. nur Priorität A
-python -m aufgabenserver.cli list -o
-python -m aufgabenserver.cli list -p A
+python -m taskserver.cli list -o
+python -m taskserver.cli list -p A
 
 # Details anzeigen, abhaken, löschen
-python -m aufgabenserver.cli show <id>
-python -m aufgabenserver.cli done <id>
-python -m aufgabenserver.cli delete <id>
+python -m taskserver.cli show <id>
+python -m taskserver.cli done <id>
+python -m taskserver.cli delete <id>
 
-# Eigener Dateipfad statt aufgaben.json
-python -m aufgabenserver.cli --datei test/aufgaben.json list
+# Eigener Dateipfad statt tasks.json
+python -m taskserver.cli --datei test/aufgaben.json list
 ```
 
-## Nächster Schritt
+## Schritt 2: MCP-Server
 
-Schritt 2: Aufbau des MCP-Servers mit FastMCP (`mcp`-Paket). Die Funktionen
-des Repositories werden dann als MCP-Tools (`aufgabe_anlegen`,
-`aufgaben_auflisten`, `aufgabe_abhaken`, ...) angeboten, damit die KI die
-Aufgabenverwaltung direkt nutzen kann.
+Der MCP-Server (`taskserver/mcp_server.py`) stellt dieselben
+Repository-Funktionen als MCP-Tools bereit – vollständíg englisch,
+da die Tool-Beschreibungen von der KI gelesen werden:
+
+| Tool | Beschreibung |
+|------|--------------|
+| `add_task` | Neue Aufgabe anlegen (Titel, Beschreibung, Priorität A–D) |
+| `list_tasks` | Aufgaben anzeigen, filterbar nach Status und Priorität |
+| `get_task` | Details einer Aufgabe anzeigen |
+| `complete_task` | Aufgabe als erledigt markieren |
+| `delete_task` | Aufgabe löschen |
+
+### Ressource (Kontext für die KI)
+
+| URI | Beschreibung |
+|-----|--------------|
+| `taskserver://priorities` | Erklärung des Prioritätensystems A–D (Ressource, kein Tool, da reiner Lese-Kontext) |
+
+### Prompt (wiederverwendbarer Auftrag)
+
+| Prompt | Beschreibung |
+|--------|--------------|
+| `plan_my_day` | Erstellt aus den offenen Aufgaben eine fokussierte Tagesliste: die KI wählt max. 4 Aufgaben und sortiert sie nach Priorität |
+
+Server starten (Stdio-Transport, Kommunikation über stdin/stdout):
+
+```bash
+python -m taskserver.mcp_server
+```
+
+Zum Testen ohne eigene KI eignet sich der MCP Inspector:
+
+```bash
+npx @modelcontextprotocol/inspector python -m taskserver.mcp_server
+```
+
+### Eigener MCP-Client (REPL)
+
+Für Lernzwecke liegt ein eigener interaktiver MCP-Client bei, der sich
+per stdio mit dem Server verbindet und alle Protokoll-Fähigkeiten von
+Hand ausprobierbar macht (Tools, Ressourcen, Prompts):
+
+```bash
+python -m taskserver.mcp_client
+```
+
+Befehle im Client (Auswahl, `hilfe` zeigt alles):
+
+```
+add Erste Aufgabe -b Test -p A    # Tool add_task aufrufen
+liste -o                          # Tool list_tasks, nur offene
+ressourcen / lies <uri>           # Ressourcen entdecken und lesen
+prompts / prompt plan_my_day      # Prompts auflisten und abrufen
+ende                              # Verbindung trennen
+```
+
+Installation des SDK: `pip install "mcp>=2.0"` (siehe `requirements.txt`).
+Hinweis: In SDK 2.x heißt die Serverklasse `MCPServer`
+(`from mcp.server.mcpserver import MCPServer`); in älteren Versionen
+hieß sie `FastMCP`.
